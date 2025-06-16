@@ -1,0 +1,6 @@
+spring:
+    application:
+        name: tccArticle
+
+server:
+    port: 8081
