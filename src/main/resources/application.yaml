@@ -1,6 +1,9 @@
 spring:
     application:
         name: tccArticle
+    data:
+        mongodb:
+            uri: mongodb://localhost:27017/mongodb-container
 
 server:
     port: 8081
