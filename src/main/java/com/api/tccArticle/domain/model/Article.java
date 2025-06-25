@@ -1,14 +1,19 @@
 package com.api.tccArticle.domain.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @Document(collection = "tb_article")
 public class Article {
 
@@ -17,5 +22,6 @@ public class Article {
     private String title;
     private String content;
     private String cdAuthor;
+    @CreatedDate
     private LocalDateTime dataPublicacao;
 }
