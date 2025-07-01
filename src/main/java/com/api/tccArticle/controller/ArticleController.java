@@ -2,28 +2,29 @@ package com.api.tccArticle.controller;
 
 import com.api.tccArticle.domain.dto.ArticleDTO;
 import com.api.tccArticle.domain.model.Article;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import com.api.tccArticle.services.ArticleService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 
-@RestController
-@RequestMapping("/articles")
-public class ArticleController {
+public interface ArticleController {
 
-    private final ArticleService service;
+    @PostMapping("/{id}")
+    ResponseEntity<Article> create(@RequestBody @Valid ArticleDTO article, @PathVariable String id);
 
-    public ArticleController(ArticleService service) {
-        this.service = service;
-    }
+    @GetMapping
+    ResponseEntity<List<Article>> getAll();
 
-    @PostMapping
-    public ResponseEntity<Article>  create(@RequestBody @Valid ArticleDTO article) {
-        Article saved = service.save(article);
-        return ResponseEntity.ok(saved);
-    }
+    @GetMapping("/{id}")
+    ResponseEntity<Article> getById(@PathVariable String id);
+
+    @PutMapping("/{id}/{articleId}")
+    ResponseEntity<Article> update( @RequestBody @Valid ArticleDTO article,@PathVariable String id, @PathVariable String articleId);
+
+    @DeleteMapping("/{id}")
+    ResponseEntity<Void> delete(@PathVariable String id);
+
+    @GetMapping("/author/{cdAuthor}")
+    ResponseEntity<List<Article>> getByCdAuthor(@PathVariable String cdAuthor);
 }

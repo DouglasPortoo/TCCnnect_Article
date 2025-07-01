@@ -1,0 +1,61 @@
+package com.api.tccArticle.controller.impl;
+
+import com.api.tccArticle.controller.ArticleController;
+import com.api.tccArticle.domain.dto.ArticleDTO;
+import com.api.tccArticle.domain.model.Article;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import com.api.tccArticle.services.ArticleService;
+import jakarta.validation.Valid;
+
+import java.util.List;
+
+
+@RestController
+@RequestMapping("/articles")
+public class ArticleControllerImpl implements ArticleController {
+
+    private final ArticleService service;
+
+    public ArticleControllerImpl(ArticleService service) {
+        this.service = service;
+    }
+
+    @Override
+    public ResponseEntity<Article>  create(@RequestBody @Valid ArticleDTO article , @PathVariable String id) {
+        Article saved = service.save(article ,id);
+        return ResponseEntity.ok(saved);
+    }
+
+    @Override
+    public ResponseEntity<List<Article>> getAll() {
+        return ResponseEntity.ok(service.findAll());
+    }
+
+    @Override
+    public ResponseEntity<Article> getById(String id) {
+        return service.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Override
+    public ResponseEntity<Article> update( @RequestBody @Valid ArticleDTO article, @PathVariable String id, @PathVariable String articleId) {
+        Article updated = service.update(article, id, articleId);
+        return ResponseEntity.ok(updated);
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(String id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<List<Article>> getByCdAuthor(String cdAuthor) {
+        return ResponseEntity.ok(service.findByCdAuthor(cdAuthor));
+    }
+}
