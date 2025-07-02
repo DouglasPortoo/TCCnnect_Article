@@ -27,7 +27,7 @@ public class ArticleControllerImpl implements ArticleController {
     @Override
     public ResponseEntity<Article>  create(@RequestBody @Valid ArticleDTO article , @PathVariable String id) {
         Article saved = service.save(article ,id);
-        return ResponseEntity.ok(saved);
+        return ResponseEntity.status(201).body(saved);
     }
 
     @Override
