@@ -1,5 +1,6 @@
 package com.api.tccArticle.controller.impl;
 
+import com.api.tccArticle.config.ArticleProducer;
 import com.api.tccArticle.controller.ArticleController;
 import com.api.tccArticle.domain.dto.ArticleDTO;
 import com.api.tccArticle.domain.model.Article;
@@ -19,14 +20,17 @@ import java.util.List;
 public class ArticleControllerImpl implements ArticleController {
 
     private final ArticleService service;
+    private final ArticleProducer producer;
 
-    public ArticleControllerImpl(ArticleService service) {
+    public ArticleControllerImpl(ArticleService service, ArticleProducer producer) {
         this.service = service;
+        this.producer = producer;
     }
 
     @Override
     public ResponseEntity<Article>  create(@RequestBody @Valid ArticleDTO article , @PathVariable String id) {
         Article saved = service.save(article ,id);
+        producer.publishNewArticle(saved);
         return ResponseEntity.status(201).body(saved);
     }
 
