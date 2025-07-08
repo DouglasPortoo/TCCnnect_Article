@@ -6,7 +6,9 @@ import com.api.tccArticle.openfeign.request.UsuarioClient;
 import com.api.tccArticle.repository.ArticleRepository;
 import com.api.tccArticle.services.ArticleService;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,14 +18,16 @@ public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleRepository repository;
     private final UsuarioClient usuarioClient;
+    private final PdfStorageServiceImpl pdfStorageService;
 
-    public  ArticleServiceImpl(ArticleRepository repository, UsuarioClient usuarioClient) {
+    public  ArticleServiceImpl(ArticleRepository repository, UsuarioClient usuarioClient,PdfStorageServiceImpl pdfStorageService) {
         this.repository = repository;
         this.usuarioClient = usuarioClient;
+        this.pdfStorageService = pdfStorageService;
     }
 
     @Override
-    public Article save(ArticleDTO article, String id){
+    public Article save(String title, String resumo, List<String> palavrasChave, List<String> autores,String content, MultipartFile pdf, String id){
 
         var usuarioResponse = usuarioClient.buscarPorId(id);
         String IdUsuario = usuarioResponse.getBody().cdUsuario();
@@ -32,12 +36,19 @@ public class ArticleServiceImpl implements ArticleService {
             throw new IllegalArgumentException("Id não encontrado ou nome inválido.");
         }
 
-        Article newArticle = new Article();
-        newArticle.setTitle(article.title());
-        newArticle.setContent(article.content());
-        newArticle.setCdAuthor(IdUsuario);
+        String pdfUrl = pdfStorageService.save(pdf);
 
-        return repository.save(newArticle);
+        Article article = new Article();
+        article.setTitle(title);
+        article.setResumo(resumo);
+        article.setPalavrasChave(palavrasChave);
+        article.setAutores(autores);
+        article.setPdfUrl(pdfUrl);
+        article.setCdAuthor(id);
+        article.setContent(content);
+        article.setDataPublicacao(LocalDateTime.now());
+
+        return repository.save(article);
     }
 
     @Override

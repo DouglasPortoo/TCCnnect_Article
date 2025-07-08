@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -20,8 +21,12 @@ public class Article {
     @MongoId
     private String cdArtigo;
     private String title;
+    private String resumo;
+    private List<String> palavrasChave;
+    private List<String> autores;
     private String content;
     private String cdAuthor;
+    private String pdfUrl;
     @CreatedDate
     private LocalDateTime dataPublicacao;
 }
