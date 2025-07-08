@@ -23,21 +23,23 @@ class ArticleServiceImplTest {
     private ArticleRepository repository;
     private UsuarioClient usuarioClient;
     private ArticleServiceImpl service;
+    private PdfStorageServiceImpl pdfStorageService;
 
 
     @BeforeEach
     void setUp() {
         repository = mock(ArticleRepository.class);
         usuarioClient = mock(UsuarioClient.class);
-        service = new ArticleServiceImpl(repository, usuarioClient);
+        pdfStorageService = mock(PdfStorageServiceImpl.class);
+        service = new ArticleServiceImpl(repository, usuarioClient, pdfStorageService);
     }
 
     @Test
     void shouldSaveArticleWhenUserIdIsValid() {
-        ArticleDTO dto = new ArticleDTO("Título", "Conteúdo");
+        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
         Article saved = new Article();
-        saved.setTitle("Título");
-        saved.setContent("Conteúdo");
+        saved.setTitle("Meu Título");
+        saved.setContent("Meu Conteúdo");
         saved.setCdAuthor("123");
 
         var usuarioResponse = mock(ResponseEntity.class);
@@ -48,10 +50,16 @@ class ArticleServiceImplTest {
         when(usuarioBody.cdUsuario()).thenReturn("123");
         when(repository.save(any(Article.class))).thenReturn(saved);
 
-        Article result = service.save(dto, "1");
+       Article result = service.save(dto.title(),
+               dto.content(),
+               dto.palavrasChave(),
+               dto.autores(),
+               dto.resumo(),
+               dto.pdf(),
+               "1");
 
-        assertEquals("Título", result.getTitle());
-        assertEquals("Conteúdo", result.getContent());
+        assertEquals("Meu Título", result.getTitle());
+        assertEquals("Meu Conteúdo", result.getContent());
         assertEquals("123", result.getCdAuthor());
     }
 
@@ -90,7 +98,7 @@ class ArticleServiceImplTest {
 
     @Test
     void shouldUpdateArticleWhenValid() {
-        ArticleDTO dto = new ArticleDTO("Novo", "Conteúdo");
+        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
         Article existing = new Article();
         existing.setCdAuthor("old");
         Article updated = new Article();
@@ -115,7 +123,7 @@ class ArticleServiceImplTest {
 
     @Test
     void shouldThrowExceptionWhenArticleNotFoundOnUpdate() {
-        ArticleDTO dto = new ArticleDTO("Novo", "Conteúdo");
+        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
         when(usuarioClient.buscarPorId("1")).thenReturn(usuarioResponse);
@@ -134,7 +142,7 @@ class ArticleServiceImplTest {
 
     @Test
     void shouldThrowExceptionWhenUserIdIsNullOnSave() {
-        ArticleDTO dto = new ArticleDTO("Título", "Conteúdo");
+        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
 
@@ -142,12 +150,18 @@ class ArticleServiceImplTest {
         when(usuarioResponse.getBody()).thenReturn(usuarioBody);
         when(usuarioBody.cdUsuario()).thenReturn(null);
 
-        assertThrows(IllegalArgumentException.class, () -> service.save(dto, "1"));
+        assertThrows(IllegalArgumentException.class, () -> service.save(dto.title(),
+                dto.content(),
+                dto.palavrasChave(),
+                dto.autores(),
+                dto.resumo(),
+                dto.pdf(),
+                "1"));
     }
 
     @Test
     void shouldThrowExceptionWhenUserIdIsEmptyOnSave() {
-        ArticleDTO dto = new ArticleDTO("Título", "Conteúdo");
+        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
 
@@ -155,12 +169,18 @@ class ArticleServiceImplTest {
         when(usuarioResponse.getBody()).thenReturn(usuarioBody);
         when(usuarioBody.cdUsuario()).thenReturn("");
 
-        assertThrows(IllegalArgumentException.class, () -> service.save(dto, "1"));
+        assertThrows(IllegalArgumentException.class, () -> service.save(dto.title(),
+                dto.content(),
+                dto.palavrasChave(),
+                dto.autores(),
+                dto.resumo(),
+                dto.pdf(),
+                "1"));
     }
 
     @Test
     void shouldThrowExceptionWhenUserIdIsNullOnUpdate() {
-        ArticleDTO dto = new ArticleDTO("Novo", "Conteúdo");
+        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
 
@@ -173,7 +193,7 @@ class ArticleServiceImplTest {
 
     @Test
     void shouldThrowExceptionWhenUserIdIsEmptyOnUpdate() {
-        ArticleDTO dto = new ArticleDTO("Novo", "Conteúdo");
+        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
 

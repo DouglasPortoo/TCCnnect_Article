@@ -26,16 +26,20 @@ public class ArticleControllerImpl implements ArticleController {
 
     @Override
     public ResponseEntity<Article>  create(@ModelAttribute @Valid ArticleDTO article , @PathVariable String id) {
-        Article saved = service.save(
-                article.title(),
-                article.resumo(),
-                article.palavrasChave(),
-                article.autores(),
-                article.content(),
-                article.pdf(),
-                id);
-        producer.publishNewArticle(saved);
-        return ResponseEntity.status(201).body(saved);
+        try {
+            Article saved = service.save(
+                    article.title(),
+                    article.resumo(),
+                    article.palavrasChave(),
+                    article.autores(),
+                    article.content(),
+                    article.pdf(),
+                    id);
+            producer.publishNewArticle(saved);
+            return ResponseEntity.status(201).body(saved);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
     }
 
     @Override
