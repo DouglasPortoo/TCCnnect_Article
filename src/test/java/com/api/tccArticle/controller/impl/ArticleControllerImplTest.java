@@ -1,19 +1,17 @@
 package com.api.tccArticle.controller.impl;
 
 import com.api.tccArticle.config.ArticleProducer;
-import com.api.tccArticle.domain.dto.ArticleDTO;
-import com.api.tccArticle.domain.model.Article;
+import com.api.tccArticle.domain.dto.ArticleRequestDTO;
+import com.api.tccArticle.domain.dto.ArticleResponseDTO;
+import com.api.tccArticle.domain.dto.ArticleUpdateDTO;
 import com.api.tccArticle.services.ArticleService;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.multipart.MultipartFile;
+
 
 import java.util.List;
 import java.util.Optional;
@@ -41,74 +39,46 @@ class ArticleControllerImplTest {
 
     @Test
     void shouldReturnCreatedArticleWhenValidInputIsProvided() {
-        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
-        Article article = new Article();
-        article.setTitle("Meu Título");
-        article.setContent("Meu Conteúdo");
-
-        // Captura o argumento passado ao service.save
-        ArgumentCaptor<ArticleDTO> captor = ArgumentCaptor.forClass(ArticleDTO.class);
-        when(service.save(anyString(), anyString(), anyList(), anyList(), anyString(), any(MultipartFile.class), anyString())).thenReturn(article);
-
-        ResponseEntity<Article> response = controller.create(dto, "1");
-
-        // Verifica se o DTO passado ao service tem os valores esperados
-        verify(service).save(
-                eq("Meu Título"),
-                eq("Resumo do artigo"),
-                eq(List.of("palavra1", "palavra2")),
-                eq(List.of("Autor 1", "Autor 2")),
-                eq("Meu Conteúdo"),
-                isNull(),
-                eq("1")
+        ArticleRequestDTO dto = new ArticleRequestDTO(
+                "Meu Título", "Meu Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1"
+        );
+        ArticleResponseDTO responseDTO = new ArticleResponseDTO(
+                "1", "Meu Título", "Meu Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null
         );
 
-        // Verifica se o producer foi chamado
-//        verify(producer).publishNewArticle(article);
+        when(service.save(any(ArticleRequestDTO.class))).thenReturn(responseDTO);
 
-        // Verifica o corpo e o status da resposta
-//        assertEquals(article, response.getBody());
-//        assertEquals(201, response.getStatusCodeValue());
-    }
+        ResponseEntity<Void> response = controller.create(dto);
 
-    @Test
-    void shouldReturnBadRequestWhenInvalidInputIsProvided() {
-        ArticleDTO invalidDto = new ArticleDTO("", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
-
-        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        var violations = validator.validate(invalidDto);
-
-        assertFalse(violations.isEmpty());
+        verify(service).save(any(ArticleRequestDTO.class));
+        verify(producer).publishNewArticle(responseDTO);
+        assertEquals(201, response.getStatusCodeValue());
     }
 
     @Test
     void shouldReturnInternalServerErrorWhenServiceThrowsException() {
-        ArticleDTO dto = new ArticleDTO("", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
+        ArticleRequestDTO dto = new ArticleRequestDTO(
+                "Meu Título", "Meu Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1"
+        );
 
-        when(service.save(
-                anyString(),
-                anyString(),
-                anyList(),
-                anyList(),
-                anyString(),
-                nullable(MultipartFile.class),
-                anyString()
-        )).thenThrow(new RuntimeException("Erro interno"));
+        when(service.save(any(ArticleRequestDTO.class))).thenThrow(new RuntimeException("Erro interno"));
 
-        ResponseEntity<Article> response = controller.create(dto, "1");
+        ResponseEntity<Void> response = controller.create(dto);
         assertEquals(500, response.getStatusCodeValue());
     }
 
-
     @Test
     void shouldReturnAllArticles() {
-        Article article1 = new Article();
-        Article article2 = new Article();
-        List<Article> articles = List.of(article1, article2);
+        ArticleResponseDTO dto1 = new ArticleResponseDTO("1", "Título 1", "Conteúdo 1", "Resumo 1", List.of(), List.of(), null);
+        ArticleResponseDTO dto2 = new ArticleResponseDTO("2", "Título 2", "Conteúdo 2", "Resumo 2", List.of(), List.of(), null);
+        List<ArticleResponseDTO> articles = List.of(dto1, dto2);
 
         when(service.findAll()).thenReturn(articles);
 
-        ResponseEntity<List<Article>> response = controller.getAll();
+        ResponseEntity<List<ArticleResponseDTO>> response = controller.getAll();
 
         assertEquals(articles, response.getBody());
         assertEquals(200, response.getStatusCodeValue());
@@ -116,12 +86,12 @@ class ArticleControllerImplTest {
 
     @Test
     void shouldReturnArticleWhenIdExists() {
-        Article article = new Article();
-        when(service.findById("1")).thenReturn(Optional.of(article));
+        ArticleResponseDTO dto = new ArticleResponseDTO("1", "Título", "Conteúdo", "Resumo", List.of(), List.of(), null);
+        when(service.findById("1")).thenReturn(Optional.of(dto));
 
-        ResponseEntity<Article> response = controller.getById("1");
+        ResponseEntity<ArticleResponseDTO> response = controller.getById("1");
 
-        assertEquals(article, response.getBody());
+        assertEquals(dto, response.getBody());
         assertEquals(200, response.getStatusCodeValue());
     }
 
@@ -129,7 +99,7 @@ class ArticleControllerImplTest {
     void shouldReturnNotFoundWhenIdDoesNotExist() {
         when(service.findById("1")).thenReturn(Optional.empty());
 
-        ResponseEntity<Article> response = controller.getById("1");
+        ResponseEntity<ArticleResponseDTO> response = controller.getById("1");
 
         assertNull(response.getBody());
         assertEquals(404, response.getStatusCodeValue());
@@ -137,38 +107,53 @@ class ArticleControllerImplTest {
 
     @Test
     void shouldUpdateArticleWhenValidInputIsProvided() {
-        ArticleDTO dto = new ArticleDTO("Novo Título", "Novo Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
-        Article updated = new Article();
-        updated.setTitle("Novo Título");
-        updated.setContent("Novo Conteúdo");
+        ArticleUpdateDTO dto = new ArticleUpdateDTO(
+                "Novo Título", "Novo Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2"
+        );
+        ArticleResponseDTO responseDTO = new ArticleResponseDTO(
+                "2", "Novo Título", "Novo Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null
+        );
 
-        ArgumentCaptor<ArticleDTO> captor = ArgumentCaptor.forClass(ArticleDTO.class);
-        when(service.update(captor.capture(), anyString(), anyString())).thenReturn(updated);
+        when(service.update(any(ArticleUpdateDTO.class))).thenReturn(responseDTO);
 
-        ResponseEntity<Article> response = controller.update(dto, "1", "2");
+        ResponseEntity<Void> response = controller.update(dto);
 
-        ArticleDTO dtoCapturado = captor.getValue();
-        assertEquals("Novo Título", dtoCapturado.title());
-        assertEquals("Novo Conteúdo", dtoCapturado.content());
-        assertEquals(updated, response.getBody());
+        verify(service).update(any(ArticleUpdateDTO.class));
+        verify(producer).publishNewArticle(responseDTO);
         assertEquals(200, response.getStatusCodeValue());
+    }
+
+    @Test
+    void shouldReturnInternalServerErrorWhenUpdateThrowsException() {
+        ArticleUpdateDTO dto = new ArticleUpdateDTO(
+                "Novo Título", "Novo Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2"
+        );
+
+        when(service.update(any(ArticleUpdateDTO.class))).thenThrow(new RuntimeException("Erro interno"));
+
+        ResponseEntity<Void> response = controller.update(dto);
+        assertEquals(500, response.getStatusCodeValue());
     }
 
     @Test
     void shouldDeleteArticle() {
         ResponseEntity<Void> response = controller.delete("1");
+        verify(service).delete("1");
         assertEquals(204, response.getStatusCodeValue());
         assertNull(response.getBody());
     }
 
     @Test
     void shouldReturnArticlesByCdAuthor() {
-        Article article = new Article();
-        List<Article> articles = List.of(article);
+        ArticleResponseDTO dto = new ArticleResponseDTO("1", "Título", "Conteúdo", "Resumo", List.of(), List.of(), null);
+        List<ArticleResponseDTO> articles = List.of(dto);
 
         when(service.findByCdAuthor("author1")).thenReturn(articles);
 
-        ResponseEntity<List<Article>> response = controller.getByCdAuthor("author1");
+        ResponseEntity<List<ArticleResponseDTO>> response = controller.getByCdAuthor("author1");
 
         assertEquals(articles, response.getBody());
         assertEquals(200, response.getStatusCodeValue());

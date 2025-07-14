@@ -1,6 +1,8 @@
 package com.api.tccArticle.services.impl;
 
-import com.api.tccArticle.domain.dto.ArticleDTO;
+import com.api.tccArticle.domain.dto.ArticleRequestDTO;
+import com.api.tccArticle.domain.dto.ArticleResponseDTO;
+import com.api.tccArticle.domain.dto.ArticleUpdateDTO;
 import com.api.tccArticle.domain.dto.UsuarioDTO;
 import com.api.tccArticle.domain.model.Article;
 import com.api.tccArticle.openfeign.request.UsuarioClient;
@@ -25,7 +27,6 @@ class ArticleServiceImplTest {
     private ArticleServiceImpl service;
     private PdfStorageServiceImpl pdfStorageService;
 
-
     @BeforeEach
     void setUp() {
         repository = mock(ArticleRepository.class);
@@ -36,7 +37,10 @@ class ArticleServiceImplTest {
 
     @Test
     void shouldSaveArticleWhenUserIdIsValid() {
-        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
+        ArticleRequestDTO dto = new ArticleRequestDTO(
+                "Meu Título", "Meu Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1"
+        );
         Article saved = new Article();
         saved.setTitle("Meu Título");
         saved.setContent("Meu Conteúdo");
@@ -50,61 +54,65 @@ class ArticleServiceImplTest {
         when(usuarioBody.cdUsuario()).thenReturn("123");
         when(repository.save(any(Article.class))).thenReturn(saved);
 
-       Article result = service.save(dto.title(),
-               dto.content(),
-               dto.palavrasChave(),
-               dto.autores(),
-               dto.resumo(),
-               dto.pdf(),
-               "1");
+        ArticleResponseDTO result = service.save(dto);
 
-        assertEquals("Meu Título", result.getTitle());
-        assertEquals("Meu Conteúdo", result.getContent());
-        assertEquals("123", result.getCdAuthor());
+        assertEquals("Meu Título", result.title());
+        assertEquals("Meu Conteúdo", result.content());
     }
 
     @Test
     void shouldReturnAllArticles() {
         Article article = new Article();
+        article.setCdArtigo("1");
+        article.setTitle("Título");
+        article.setContent("Conteúdo");
         when(repository.findAll()).thenReturn(List.of(article));
 
-        List<Article> result = service.findAll();
+        List<ArticleResponseDTO> result = service.findAll();
 
         assertEquals(1, result.size());
-        assertEquals(article, result.get(0));
+        assertEquals("Título", result.get(0).title());
     }
 
     @Test
     void shouldReturnArticleById() {
         Article article = new Article();
+        article.setCdArtigo("1");
+        article.setTitle("Título");
         when(repository.findById("1")).thenReturn(Optional.of(article));
 
-        Optional<Article> result = service.findById("1");
+        Optional<ArticleResponseDTO> result = service.findById("1");
 
         assertTrue(result.isPresent());
-        assertEquals(article, result.get());
+        assertEquals("Título", result.get().title());
     }
 
     @Test
     void shouldReturnArticlesByCdAuthor() {
         Article article = new Article();
+        article.setCdArtigo("1");
+        article.setTitle("Título");
         when(repository.findByCdAuthor("author")).thenReturn(List.of(article));
 
-        List<Article> result = service.findByCdAuthor("author");
+        List<ArticleResponseDTO> result = service.findByCdAuthor("author");
 
         assertEquals(1, result.size());
-        assertEquals(article, result.get(0));
+        assertEquals("Título", result.get(0).title());
     }
 
     @Test
     void shouldUpdateArticleWhenValid() {
-        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
+        ArticleUpdateDTO dto = new ArticleUpdateDTO(
+                "Novo Título", "Novo Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2"
+        );
         Article existing = new Article();
-        existing.setCdAuthor("old");
+        existing.setCdArtigo("2");
+        existing.setTitle("Antigo");
         Article updated = new Article();
-        updated.setTitle("Novo");
-        updated.setContent("Conteúdo");
-        updated.setCdAuthor("123");
+        updated.setCdArtigo("2");
+        updated.setTitle("Novo Título");
+        updated.setContent("Novo Conteúdo");
 
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
@@ -114,16 +122,18 @@ class ArticleServiceImplTest {
         when(repository.findById("2")).thenReturn(Optional.of(existing));
         when(repository.save(any(Article.class))).thenReturn(updated);
 
-        Article result = service.update(dto, "1", "2");
+        ArticleResponseDTO result = service.update(dto);
 
-        assertEquals("Novo", result.getTitle());
-        assertEquals("Conteúdo", result.getContent());
-        assertEquals("123", result.getCdAuthor());
+        assertEquals("Novo Título", result.title());
+        assertEquals("Novo Conteúdo", result.content());
     }
 
     @Test
     void shouldThrowExceptionWhenArticleNotFoundOnUpdate() {
-        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
+        ArticleUpdateDTO dto = new ArticleUpdateDTO(
+                "Novo Título", "Novo Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2"
+        );
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
         when(usuarioClient.buscarPorId("1")).thenReturn(usuarioResponse);
@@ -131,18 +141,25 @@ class ArticleServiceImplTest {
         when(usuarioBody.cdUsuario()).thenReturn("123");
         when(repository.findById("2")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> service.update(dto, "1", "2"));
+        assertThrows(IllegalArgumentException.class, () -> service.update(dto));
     }
 
     @Test
     void shouldDeleteArticle() {
+        Article article = new Article();
+        article.setCdArtigo("1");
+        when(repository.findById("1")).thenReturn(Optional.of(article));
+
         service.delete("1");
         verify(repository).deleteById("1");
     }
 
     @Test
     void shouldThrowExceptionWhenUserIdIsNullOnSave() {
-        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
+        ArticleRequestDTO dto = new ArticleRequestDTO(
+                "Meu Título", "Meu Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1"
+        );
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
 
@@ -150,18 +167,15 @@ class ArticleServiceImplTest {
         when(usuarioResponse.getBody()).thenReturn(usuarioBody);
         when(usuarioBody.cdUsuario()).thenReturn(null);
 
-        assertThrows(IllegalArgumentException.class, () -> service.save(dto.title(),
-                dto.content(),
-                dto.palavrasChave(),
-                dto.autores(),
-                dto.resumo(),
-                dto.pdf(),
-                "1"));
+        assertThrows(IllegalArgumentException.class, () -> service.save(dto));
     }
 
     @Test
     void shouldThrowExceptionWhenUserIdIsEmptyOnSave() {
-        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
+        ArticleRequestDTO dto = new ArticleRequestDTO(
+                "Meu Título", "Meu Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1"
+        );
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
 
@@ -169,18 +183,15 @@ class ArticleServiceImplTest {
         when(usuarioResponse.getBody()).thenReturn(usuarioBody);
         when(usuarioBody.cdUsuario()).thenReturn("");
 
-        assertThrows(IllegalArgumentException.class, () -> service.save(dto.title(),
-                dto.content(),
-                dto.palavrasChave(),
-                dto.autores(),
-                dto.resumo(),
-                dto.pdf(),
-                "1"));
+        assertThrows(IllegalArgumentException.class, () -> service.save(dto));
     }
 
     @Test
     void shouldThrowExceptionWhenUserIdIsNullOnUpdate() {
-        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
+        ArticleUpdateDTO dto = new ArticleUpdateDTO(
+                "Novo Título", "Novo Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2"
+        );
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
 
@@ -188,12 +199,15 @@ class ArticleServiceImplTest {
         when(usuarioResponse.getBody()).thenReturn(usuarioBody);
         when(usuarioBody.cdUsuario()).thenReturn(null);
 
-        assertThrows(IllegalArgumentException.class, () -> service.update(dto, "1", "2"));
+        assertThrows(IllegalArgumentException.class, () -> service.update(dto));
     }
 
     @Test
     void shouldThrowExceptionWhenUserIdIsEmptyOnUpdate() {
-        ArticleDTO dto = new ArticleDTO("Meu Título", "Meu Conteúdo", "Resumo do artigo", List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null);
+        ArticleUpdateDTO dto = new ArticleUpdateDTO(
+                "Novo Título", "Novo Conteúdo", "Resumo do artigo",
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2"
+        );
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
 
@@ -201,7 +215,6 @@ class ArticleServiceImplTest {
         when(usuarioResponse.getBody()).thenReturn(usuarioBody);
         when(usuarioBody.cdUsuario()).thenReturn("");
 
-        assertThrows(IllegalArgumentException.class, () -> service.update(dto, "1", "2"));
+        assertThrows(IllegalArgumentException.class, () -> service.update(dto));
     }
-
 }
