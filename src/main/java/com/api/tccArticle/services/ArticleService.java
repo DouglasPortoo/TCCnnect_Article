@@ -1,17 +1,18 @@
 package com.api.tccArticle.services;
 
-import com.api.tccArticle.domain.dto.ArticleDTO;
-import com.api.tccArticle.domain.model.Article;
+import com.api.tccArticle.domain.dto.ArticleRequestDTO;
+import com.api.tccArticle.domain.dto.ArticleResponseDTO;
+import com.api.tccArticle.domain.dto.ArticleUpdateDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface ArticleService {
-    Article save(String title, String resumo, List<String> palavrasChave, List<String> autores, String content,MultipartFile pdf, String id);
-    List<Article> findAll();
-    Optional<Article> findById(String id);
-    Article update( ArticleDTO articleDTO,String id, String articleId);
+    ArticleResponseDTO save(ArticleRequestDTO article);
+    List<ArticleResponseDTO> findAll();
+    Optional<ArticleResponseDTO> findById(String id);
+    ArticleResponseDTO update(ArticleUpdateDTO articleDTO);
     void delete(String id);
-    List<Article> findByCdAuthor(String cdAuthor);
+    List<ArticleResponseDTO> findByCdAuthor(String cdAuthor);
 }

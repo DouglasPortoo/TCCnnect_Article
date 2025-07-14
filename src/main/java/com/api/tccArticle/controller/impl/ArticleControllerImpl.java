@@ -2,12 +2,12 @@ package com.api.tccArticle.controller.impl;
 
 import com.api.tccArticle.config.ArticleProducer;
 import com.api.tccArticle.controller.ArticleController;
-import com.api.tccArticle.domain.dto.ArticleDTO;
-import com.api.tccArticle.domain.model.Article;
+import com.api.tccArticle.domain.dto.ArticleRequestDTO;
+import com.api.tccArticle.domain.dto.ArticleResponseDTO;
+import com.api.tccArticle.domain.dto.ArticleUpdateDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.api.tccArticle.services.ArticleService;
-import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -25,39 +25,37 @@ public class ArticleControllerImpl implements ArticleController {
     }
 
     @Override
-    public ResponseEntity<Article>  create(@ModelAttribute @Valid ArticleDTO article , @PathVariable String id) {
+    public ResponseEntity<Void> create(ArticleRequestDTO article) {
         try {
-            Article saved = service.save(
-                    article.title(),
-                    article.resumo(),
-                    article.palavrasChave(),
-                    article.autores(),
-                    article.content(),
-                    article.pdf(),
-                    id);
+            ArticleResponseDTO saved = service.save(article);
             producer.publishNewArticle(saved);
-            return ResponseEntity.status(201).body(saved);
+            return ResponseEntity.status(201).build();
         } catch (Exception e) {
             return ResponseEntity.status(500).build();
         }
     }
 
     @Override
-    public ResponseEntity<List<Article>> getAll() {
+    public ResponseEntity<List<ArticleResponseDTO>> getAll() {
         return ResponseEntity.ok(service.findAll());
     }
 
     @Override
-    public ResponseEntity<Article> getById(String id) {
+    public ResponseEntity<ArticleResponseDTO> getById(String id) {
         return service.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @Override
-    public ResponseEntity<Article> update( @RequestBody @Valid ArticleDTO article, @PathVariable String id, @PathVariable String articleId) {
-        Article updated = service.update(article, id, articleId);
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<Void> update(ArticleUpdateDTO article) {
+        try {
+            ArticleResponseDTO saved = service.update(article);;
+            producer.publishNewArticle(saved);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
     }
 
     @Override
@@ -67,7 +65,7 @@ public class ArticleControllerImpl implements ArticleController {
     }
 
     @Override
-    public ResponseEntity<List<Article>> getByCdAuthor(String cdAuthor) {
+    public ResponseEntity<List<ArticleResponseDTO>> getByCdAuthor(String cdAuthor) {
         return ResponseEntity.ok(service.findByCdAuthor(cdAuthor));
     }
 }
