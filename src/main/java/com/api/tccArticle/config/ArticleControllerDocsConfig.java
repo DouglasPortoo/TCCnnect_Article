@@ -21,22 +21,20 @@ public class ArticleControllerDocsConfig {
         return openApi -> {
             Paths paths = openApi.getPaths();
 
-            // POST /articles/{id}
-            paths.addPathItem("/articles/{id}", new PathItem().post(createArticleOperation()));
+            // /articles: POST, GET, PUT
+            PathItem articlesPath = new PathItem()
+                    .post(createArticleOperation())
+                    .get(getAllArticlesOperation())
+                    .put(updateArticleOperation());
+            paths.addPathItem("/articles", articlesPath);
 
-            // GET /articles
-            paths.addPathItem("/articles", new PathItem().get(getAllArticlesOperation()));
+            // /articles/{id}: GET, DELETE
+            PathItem articlesIdPath = new PathItem()
+                    .get(getArticleByIdOperation())
+                    .delete(deleteArticleOperation());
+            paths.addPathItem("/articles/{id}", articlesIdPath);
 
-            // GET /articles/{id}
-            paths.addPathItem("/articles/{id}", new PathItem().get(getArticleByIdOperation()));
-
-            // PUT /articles/{id}/{articleId}
-            paths.addPathItem("/articles/{id}/{articleId}", new PathItem().put(updateArticleOperation()));
-
-            // DELETE /articles/{id}
-            paths.addPathItem("/articles/{id}", new PathItem().delete(deleteArticleOperation()));
-
-            // GET /articles/author/{cdAuthor}
+            // /articles/author/{cdAuthor}: GET
             paths.addPathItem("/articles/author/{cdAuthor}", new PathItem().get(getByCdAuthorOperation()));
         };
     }
@@ -46,18 +44,14 @@ public class ArticleControllerDocsConfig {
                 .summary("Cria um novo artigo")
                 .description("Cria um artigo para o usuário informado.")
                 .addTagsItem("Article")
-                .addParametersItem(new Parameter()
-                        .name("id")
-                        .in("path")
-                        .required(true)
-                        .schema(new Schema<>().type("string")))
                 .requestBody(new RequestBody()
                         .description("Dados do artigo")
                         .required(true)
                         .content(new Content().addMediaType("application/json",
-                                new MediaType().schema(new Schema<>().$ref("#/components/schemas/ArticleDTO")))))
+                                new MediaType().schema(new Schema<>().$ref("#/components/schemas/ArticleRequestDTO")))))
                 .responses(new ApiResponses()
-                        .addApiResponse("201", new ApiResponse().description("Artigo criado com sucesso")));
+                        .addApiResponse("201", new ApiResponse().description("Artigo criado com sucesso"))
+                        .addApiResponse("500", new ApiResponse().description("Erro interno")));
     }
 
     private Operation getAllArticlesOperation() {
@@ -89,23 +83,14 @@ public class ArticleControllerDocsConfig {
                 .summary("Atualiza um artigo")
                 .description("Atualiza um artigo existente.")
                 .addTagsItem("Article")
-                .addParametersItem(new Parameter()
-                        .name("id")
-                        .in("path")
-                        .required(true)
-                        .schema(new Schema<>().type("string")))
-                .addParametersItem(new Parameter()
-                        .name("articleId")
-                        .in("path")
-                        .required(true)
-                        .schema(new Schema<>().type("string")))
                 .requestBody(new RequestBody()
                         .description("Dados do artigo para atualização")
                         .required(true)
                         .content(new Content().addMediaType("application/json",
-                                new MediaType().schema(new Schema<>().$ref("#/components/schemas/ArticleDTO")))))
+                                new MediaType().schema(new Schema<>().$ref("#/components/schemas/ArticleUpdateDTO")))))
                 .responses(new ApiResponses()
-                        .addApiResponse("200", new ApiResponse().description("Artigo atualizado")));
+                        .addApiResponse("200", new ApiResponse().description("Artigo atualizado"))
+                        .addApiResponse("500", new ApiResponse().description("Erro interno")));
     }
 
     private Operation deleteArticleOperation() {
