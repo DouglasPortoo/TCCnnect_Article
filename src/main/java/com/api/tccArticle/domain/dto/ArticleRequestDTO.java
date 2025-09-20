@@ -7,5 +7,5 @@ import java.util.List;
 
 public record ArticleRequestDTO(@NotBlank String title, @NotBlank String content, String resumo,
                                 List<String> palavrasChave,
-                                List<String> autores, MultipartFile pdf, @NotBlank String id) {
+                                List<String> autores, MultipartFile pdf, @NotBlank String id, String status) {
 }

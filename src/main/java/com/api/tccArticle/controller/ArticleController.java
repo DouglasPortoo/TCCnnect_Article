@@ -29,4 +29,27 @@ public interface ArticleController {
 
     @GetMapping("/author/{cdAuthor}")
     ResponseEntity<List<ArticleResponseDTO>> getByCdAuthor(@PathVariable String cdAuthor);
+
+    @GetMapping("/search")
+    ResponseEntity<List<ArticleResponseDTO>> searchByTitle(@RequestParam("title") String title);
+
+    @GetMapping("/paged")
+    ResponseEntity<List<ArticleResponseDTO>> getPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort);
+
+    @GetMapping("/{id}/download")
+    ResponseEntity<byte[]> downloadPdf(@PathVariable String id);
+
+    @PutMapping(path = "/{id}/pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ResponseEntity<Void> updatePdf(@PathVariable String id, @RequestParam("file") org.springframework.web.multipart.MultipartFile file);
+
+    @GetMapping("/status")
+    ResponseEntity<List<ArticleResponseDTO>> getByStatus(@RequestParam("status") String status);
+
+    @GetMapping("/created-between")
+    ResponseEntity<List<ArticleResponseDTO>> getByCreatedBetween(
+            @RequestParam("start") String startDate,
+            @RequestParam("end") String endDate);
 }

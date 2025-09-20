@@ -29,4 +29,5 @@ public class Article {
     private String pdfUrl;
     @CreatedDate
     private LocalDateTime dataPublicacao;
+    private String status;
 }

@@ -55,6 +55,10 @@ public class ArticleServiceImpl implements ArticleService {
         article.setContent(articleRequestDTO.content());
         article.setDataPublicacao(LocalDateTime.now());
 
+        if (articleRequestDTO.status() != null && !articleRequestDTO.status().isEmpty()) {
+            article.setStatus(articleRequestDTO.status());
+        }
+
         repository.save(article);
 
         return new ArticleResponseDTO(
@@ -149,6 +153,7 @@ public class ArticleServiceImpl implements ArticleService {
         if (articleDTO.palavrasChave() != null && !articleDTO.palavrasChave().isEmpty())
             article.setPalavrasChave(articleDTO.palavrasChave());
         if (articleDTO.autores() != null && !articleDTO.autores().isEmpty()) article.setAutores(articleDTO.autores());
+        if (articleDTO.status() != null && !articleDTO.status().isEmpty()) article.setStatus(articleDTO.status());
 
         repository.save(article);
 
@@ -178,5 +183,92 @@ public class ArticleServiceImpl implements ArticleService {
         }
 
         repository.deleteById(id);
+    }
+
+    @Override
+    public List<ArticleResponseDTO> searchByTitle(String title) {
+        return repository.findByTitleIgnoreCaseContaining(title).stream()
+                .map(article -> new ArticleResponseDTO(
+                        article.getCdArtigo(),
+                        article.getTitle(),
+                        article.getContent(),
+                        article.getResumo(),
+                        article.getPalavrasChave(),
+                        article.getAutores(),
+                        article.getPdfUrl()))
+                .toList();
+    }
+
+    @Override
+    public List<ArticleResponseDTO> getPaged(int page, int size, String sort) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(sort.split(",")[0]).descending());
+        return repository.findAll(pageable).stream()
+                .map(article -> new ArticleResponseDTO(
+                        article.getCdArtigo(),
+                        article.getTitle(),
+                        article.getContent(),
+                        article.getResumo(),
+                        article.getPalavrasChave(),
+                        article.getAutores(),
+                        article.getPdfUrl()))
+                .toList();
+    }
+
+    @Override
+    public byte[] downloadPdf(String id) {
+        Article article = repository.findById(id).orElse(null);
+        if (article == null || article.getPdfUrl() == null) return null;
+        try {
+            return Files.readAllBytes(Paths.get(article.getPdfUrl()));
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public boolean updatePdf(String id, org.springframework.web.multipart.MultipartFile file) {
+        Article article = repository.findById(id).orElse(null);
+        if (article == null) return false;
+        // Remove PDF antigo
+        if (article.getPdfUrl() != null) {
+            try {
+                Files.deleteIfExists(Paths.get(article.getPdfUrl()));
+            } catch (IOException ignored) {}
+        }
+        // Salva novo PDF
+        String pdfUrl = pdfStorageService.save(file);
+        article.setPdfUrl(pdfUrl);
+        repository.save(article);
+        return true;
+    }
+
+    @Override
+    public List<ArticleResponseDTO> getByStatus(String status) {
+        return repository.findByStatusIgnoreCase(status).stream()
+                .map(article -> new ArticleResponseDTO(
+                        article.getCdArtigo(),
+                        article.getTitle(),
+                        article.getContent(),
+                        article.getResumo(),
+                        article.getPalavrasChave(),
+                        article.getAutores(),
+                        article.getPdfUrl()))
+                .toList();
+    }
+
+    @Override
+    public List<ArticleResponseDTO> getByCreatedBetween(String startDate, String endDate) {
+        java.time.LocalDateTime start = java.time.LocalDateTime.parse(startDate);
+        java.time.LocalDateTime end = java.time.LocalDateTime.parse(endDate);
+        return repository.findByDataPublicacaoBetween(start, end).stream()
+                .map(article -> new ArticleResponseDTO(
+                        article.getCdArtigo(),
+                        article.getTitle(),
+                        article.getContent(),
+                        article.getResumo(),
+                        article.getPalavrasChave(),
+                        article.getAutores(),
+                        article.getPdfUrl()))
+                .toList();
     }
 }

@@ -39,7 +39,7 @@ class ArticleServiceImplTest {
     void shouldSaveArticleWhenUserIdIsValid() {
         ArticleRequestDTO dto = new ArticleRequestDTO(
                 "Meu Título", "Meu Conteúdo", "Resumo do artigo",
-                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1"
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "publicado"
         );
         Article saved = new Article();
         saved.setTitle("Meu Título");
@@ -104,7 +104,7 @@ class ArticleServiceImplTest {
     void shouldUpdateArticleWhenValid() {
         ArticleUpdateDTO dto = new ArticleUpdateDTO(
                 "Novo Título", "Novo Conteúdo", "Resumo do artigo",
-                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2"
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2", "publicado"
         );
         Article existing = new Article();
         existing.setCdArtigo("2");
@@ -132,7 +132,7 @@ class ArticleServiceImplTest {
     void shouldThrowExceptionWhenArticleNotFoundOnUpdate() {
         ArticleUpdateDTO dto = new ArticleUpdateDTO(
                 "Novo Título", "Novo Conteúdo", "Resumo do artigo",
-                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2"
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2", "publicado"
         );
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
@@ -158,7 +158,7 @@ class ArticleServiceImplTest {
     void shouldThrowExceptionWhenUserIdIsNullOnSave() {
         ArticleRequestDTO dto = new ArticleRequestDTO(
                 "Meu Título", "Meu Conteúdo", "Resumo do artigo",
-                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1"
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "publicado"
         );
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
@@ -174,7 +174,7 @@ class ArticleServiceImplTest {
     void shouldThrowExceptionWhenUserIdIsEmptyOnSave() {
         ArticleRequestDTO dto = new ArticleRequestDTO(
                 "Meu Título", "Meu Conteúdo", "Resumo do artigo",
-                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1"
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "publicado"
         );
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
@@ -190,7 +190,7 @@ class ArticleServiceImplTest {
     void shouldThrowExceptionWhenUserIdIsNullOnUpdate() {
         ArticleUpdateDTO dto = new ArticleUpdateDTO(
                 "Novo Título", "Novo Conteúdo", "Resumo do artigo",
-                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2"
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2", "publicado"
         );
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);
@@ -206,7 +206,7 @@ class ArticleServiceImplTest {
     void shouldThrowExceptionWhenUserIdIsEmptyOnUpdate() {
         ArticleUpdateDTO dto = new ArticleUpdateDTO(
                 "Novo Título", "Novo Conteúdo", "Resumo do artigo",
-                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2"
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2", "publicado"
         );
         var usuarioResponse = mock(ResponseEntity.class);
         var usuarioBody = mock(UsuarioDTO.class);

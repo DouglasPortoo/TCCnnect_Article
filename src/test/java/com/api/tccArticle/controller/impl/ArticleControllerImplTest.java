@@ -41,7 +41,7 @@ class ArticleControllerImplTest {
     void shouldReturnCreatedArticleWhenValidInputIsProvided() {
         ArticleRequestDTO dto = new ArticleRequestDTO(
                 "Meu Título", "Meu Conteúdo", "Resumo do artigo",
-                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1"
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "publicado"
         );
         ArticleResponseDTO responseDTO = new ArticleResponseDTO(
                 "1", "Meu Título", "Meu Conteúdo", "Resumo do artigo",
@@ -54,20 +54,20 @@ class ArticleControllerImplTest {
 
         verify(service).save(any(ArticleRequestDTO.class));
         verify(producer).publishNewArticle(responseDTO);
-        assertEquals(201, response.getStatusCodeValue());
+        assertEquals(201, response.getStatusCode().value());
     }
 
     @Test
     void shouldReturnInternalServerErrorWhenServiceThrowsException() {
         ArticleRequestDTO dto = new ArticleRequestDTO(
                 "Meu Título", "Meu Conteúdo", "Resumo do artigo",
-                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1"
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "publicado"
         );
 
         when(service.save(any(ArticleRequestDTO.class))).thenThrow(new RuntimeException("Erro interno"));
 
         ResponseEntity<Void> response = controller.create(dto);
-        assertEquals(500, response.getStatusCodeValue());
+        assertEquals(500, response.getStatusCode().value());
     }
 
     @Test
@@ -81,7 +81,7 @@ class ArticleControllerImplTest {
         ResponseEntity<List<ArticleResponseDTO>> response = controller.getAll();
 
         assertEquals(articles, response.getBody());
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
     }
 
     @Test
@@ -92,7 +92,7 @@ class ArticleControllerImplTest {
         ResponseEntity<ArticleResponseDTO> response = controller.getById("1");
 
         assertEquals(dto, response.getBody());
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
     }
 
     @Test
@@ -102,14 +102,14 @@ class ArticleControllerImplTest {
         ResponseEntity<ArticleResponseDTO> response = controller.getById("1");
 
         assertNull(response.getBody());
-        assertEquals(404, response.getStatusCodeValue());
+        assertEquals(404, response.getStatusCode().value());
     }
 
     @Test
     void shouldUpdateArticleWhenValidInputIsProvided() {
         ArticleUpdateDTO dto = new ArticleUpdateDTO(
                 "Novo Título", "Novo Conteúdo", "Resumo do artigo",
-                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2"
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2", "publicado"
         );
         ArticleResponseDTO responseDTO = new ArticleResponseDTO(
                 "2", "Novo Título", "Novo Conteúdo", "Resumo do artigo",
@@ -122,27 +122,27 @@ class ArticleControllerImplTest {
 
         verify(service).update(any(ArticleUpdateDTO.class));
         verify(producer).publishNewArticle(responseDTO);
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
     }
 
     @Test
     void shouldReturnInternalServerErrorWhenUpdateThrowsException() {
         ArticleUpdateDTO dto = new ArticleUpdateDTO(
                 "Novo Título", "Novo Conteúdo", "Resumo do artigo",
-                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2"
+                List.of("palavra1", "palavra2"), List.of("Autor 1", "Autor 2"), null, "1", "2", "publicado"
         );
 
         when(service.update(any(ArticleUpdateDTO.class))).thenThrow(new RuntimeException("Erro interno"));
 
         ResponseEntity<Void> response = controller.update(dto);
-        assertEquals(500, response.getStatusCodeValue());
+        assertEquals(500, response.getStatusCode().value());
     }
 
     @Test
     void shouldDeleteArticle() {
         ResponseEntity<Void> response = controller.delete("1");
         verify(service).delete("1");
-        assertEquals(204, response.getStatusCodeValue());
+        assertEquals(204, response.getStatusCode().value());
         assertNull(response.getBody());
     }
 
@@ -156,6 +156,82 @@ class ArticleControllerImplTest {
         ResponseEntity<List<ArticleResponseDTO>> response = controller.getByCdAuthor("author1");
 
         assertEquals(articles, response.getBody());
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
+    }
+
+    @Test
+    void shouldReturnArticlesByTitle() {
+        String title = "Spring";
+        List<ArticleResponseDTO> articles = List.of(new ArticleResponseDTO("1", title, "content", "resumo", List.of(), List.of(), null));
+        when(service.searchByTitle(title)).thenReturn(articles);
+        ResponseEntity<List<ArticleResponseDTO>> response = controller.searchByTitle(title);
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(articles, response.getBody());
+    }
+
+    @Test
+    void shouldReturnPagedArticles() {
+        List<ArticleResponseDTO> articles = List.of(new ArticleResponseDTO("1", "t", "c", "r", List.of(), List.of(), null));
+        when(service.getPaged(0, 2, "createdAt,desc")).thenReturn(articles);
+        ResponseEntity<List<ArticleResponseDTO>> response = controller.getPaged(0, 2, "createdAt,desc");
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(articles, response.getBody());
+    }
+
+    @Test
+    void shouldDownloadPdfSuccessfully() {
+        String id = "1";
+        byte[] pdf = new byte[]{1, 2, 3};
+        when(service.downloadPdf(id)).thenReturn(pdf);
+        ResponseEntity<byte[]> response = controller.downloadPdf(id);
+        assertEquals(200, response.getStatusCode().value());
+        assertArrayEquals(pdf, response.getBody());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenPdfDoesNotExist() {
+        String id = "2";
+        when(service.downloadPdf(id)).thenReturn(null);
+        ResponseEntity<byte[]> response = controller.downloadPdf(id);
+        assertEquals(404, response.getStatusCode().value());
+    }
+
+    @Test
+    void shouldUpdatePdfSuccessfully() {
+        String id = "1";
+        org.springframework.web.multipart.MultipartFile file = null;
+        when(service.updatePdf(id, file)).thenReturn(true);
+        ResponseEntity<Void> response = controller.updatePdf(id, file);
+        assertEquals(200, response.getStatusCode().value());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenUpdatePdfFails() {
+        String id = "2";
+        org.springframework.web.multipart.MultipartFile file = null;
+        when(service.updatePdf(id, file)).thenReturn(false);
+        ResponseEntity<Void> response = controller.updatePdf(id, file);
+        assertEquals(404, response.getStatusCode().value());
+    }
+
+    @Test
+    void shouldReturnArticlesByStatus() {
+        String status = "publicado";
+        List<ArticleResponseDTO> articles = List.of(new ArticleResponseDTO("1", "t", "c", "r", List.of(), List.of(), null));
+        when(service.getByStatus(status)).thenReturn(articles);
+        ResponseEntity<List<ArticleResponseDTO>> response = controller.getByStatus(status);
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(articles, response.getBody());
+    }
+
+    @Test
+    void shouldReturnArticlesByCreatedBetween() {
+        String start = "2024-01-01T00:00:00";
+        String end = "2024-12-31T23:59:59";
+        List<ArticleResponseDTO> articles = List.of(new ArticleResponseDTO("1", "t", "c", "r", List.of(), List.of(), null));
+        when(service.getByCreatedBetween(start, end)).thenReturn(articles);
+        ResponseEntity<List<ArticleResponseDTO>> response = controller.getByCreatedBetween(start, end);
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(articles, response.getBody());
     }
 }

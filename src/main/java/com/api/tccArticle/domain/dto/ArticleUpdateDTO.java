@@ -5,5 +5,5 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public record ArticleUpdateDTO(String title, String content, String resumo, List<String> palavrasChave,
-                               List<String> autores, MultipartFile pdf, @NotBlank String id, @NotBlank String articleId) {
+                               List<String> autores, MultipartFile pdf, @NotBlank String id, @NotBlank String articleId, String status) {
 }

@@ -15,4 +15,10 @@ public interface ArticleService {
     ArticleResponseDTO update(ArticleUpdateDTO articleDTO);
     void delete(String id);
     List<ArticleResponseDTO> findByCdAuthor(String cdAuthor);
+    List<ArticleResponseDTO> searchByTitle(String title);
+    List<ArticleResponseDTO> getPaged(int page, int size, String sort);
+    byte[] downloadPdf(String id);
+    boolean updatePdf(String id, MultipartFile file);
+    List<ArticleResponseDTO> getByStatus(String status);
+    List<ArticleResponseDTO> getByCreatedBetween(String startDate, String endDate);
 }
